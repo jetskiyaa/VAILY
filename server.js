@@ -18,6 +18,7 @@ const REGION = process.env.VAL_REGION || "ap";
 const RIOT_BROWSER_AUTH_URL = "https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid";
 const STORE_REGIONS = ["ap", "eu", "na", "kr", "latam", "br", "pbe"];
 const execFileAsync = util.promisify(execFile);
+const CURL_BIN = process.platform === "win32" ? "curl.exe" : "curl";
 const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || "")
     .split(",")
     .map((value) => value.trim())
@@ -947,7 +948,7 @@ async function getStorefrontFromRemoteTokens(accessToken, entitlementsToken, sub
 
     for (const region of regionsToTry) {
         try {
-            const { stdout } = await execFileAsync("curl.exe", [
+            const { stdout } = await execFileAsync(CURL_BIN, [
                 "-s",
                 "-k",
                 "-X",
@@ -1001,7 +1002,7 @@ async function getStorefrontFromLocalClient() {
     const clientVersion = "release-09.00-shipping-28-2628993";
     const clientPlatform = "eyJwbGF0Zm9ybVR5cGUiOiJQQyIsInBsYXRmb3JtT1MiOiJXaW5kb3dzIiwicGxhdGZvcm1PU1ZlcnNpb24iOiIxMC4wLjE5MDQzLjEuMjU2LjY0Yml0IiwicGxhdGZvcm1DaGlwc2V0IjoiVW5rbm93biJ9";
 
-    const { stdout } = await execFileAsync("curl.exe", [
+    const { stdout } = await execFileAsync(CURL_BIN, [
         "-s",
         "-k",
         "-X",
