@@ -938,9 +938,80 @@ async function getStorefrontWithFallback(request, subject, preferredRegion) {
     throw lastError || new Error("Storefront request failed for all tested regions.");
 }
 
-async function getStorefrontFromRemoteTokens(accessToken, entitlementsToken, subject, preferredRegion) {
+async function requestStorefront({ accessToken, entitlementsToken, subject, region }) {
     const clientVersion = "release-09.00-shipping-28-2628993";
     const clientPlatform = "eyJwbGF0Zm9ybVR5cGUiOiJQQyIsInBsYXRmb3JtT1MiOiJXaW5kb3dzIiwicGxhdGZvcm1PU1ZlcnNpb24iOiIxMC4wLjE5MDQzLjEuMjU2LjY0Yml0IiwicGxhdGZvcm1DaGlwc2V0IjoiVW5rbm93biJ9";
+    const url = `https://pd.${region}.a.pvp.net/store/v3/storefront/${subject}`;
+
+    if (process.platform === "win32") {
+        const { stdout } = await execFileAsync(CURL_BIN, [
+            "-s",
+            "-k",
+            "-X",
+            "POST",
+            "-H",
+            `Authorization: Bearer ${accessToken}`,
+            "-H",
+            `X-Riot-Entitlements-JWT: ${entitlementsToken}`,
+            "-H",
+            `X-Riot-ClientVersion: ${clientVersion}`,
+            "-H",
+            `X-Riot-ClientPlatform: ${clientPlatform}`,
+            "-H",
+            "Accept: application/json",
+            "-H",
+            "Content-Type: application/json",
+            "-d",
+            "{}",
+            url
+        ], {
+            windowsHide: true,
+            timeout: 20000,
+            maxBuffer: 10 * 1024 * 1024
+        });
+
+        let parsed;
+        try {
+            parsed = JSON.parse(stdout);
+        } catch (_error) {
+            throw new Error(`Region ${region} returned invalid JSON: ${stdout.slice(0, 200)}`);
+        }
+
+        if (parsed.httpStatus && parsed.errorCode) {
+            throw new Error(`Region ${region} failed: ${parsed.errorCode} (${parsed.httpStatus}).`);
+        }
+
+        return parsed;
+    }
+
+    const response = await axios.post(url, {}, {
+        timeout: 20000,
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Riot-Entitlements-JWT": entitlementsToken,
+            "X-Riot-ClientVersion": clientVersion,
+            "X-Riot-ClientPlatform": clientPlatform,
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        validateStatus: () => true
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+        const text = typeof response.data === "string"
+            ? response.data
+            : JSON.stringify(response.data);
+        throw new Error(`Region ${region} returned ${response.status}${text ? `: ${text.slice(0, 200)}` : ""}`);
+    }
+
+    if (response.data?.httpStatus && response.data?.errorCode) {
+        throw new Error(`Region ${region} failed: ${response.data.errorCode} (${response.data.httpStatus}).`);
+    }
+
+    return response.data;
+}
+
+async function getStorefrontFromRemoteTokens(accessToken, entitlementsToken, subject, preferredRegion) {
     const regionsToTry = Array.from(
         new Set([preferredRegion, REGION, ...STORE_REGIONS].filter(Boolean))
     );
@@ -948,43 +1019,12 @@ async function getStorefrontFromRemoteTokens(accessToken, entitlementsToken, sub
 
     for (const region of regionsToTry) {
         try {
-            const { stdout } = await execFileAsync(CURL_BIN, [
-                "-s",
-                "-k",
-                "-X",
-                "POST",
-                "-H",
-                `Authorization: Bearer ${accessToken}`,
-                "-H",
-                `X-Riot-Entitlements-JWT: ${entitlementsToken}`,
-                "-H",
-                `X-Riot-ClientVersion: ${clientVersion}`,
-                "-H",
-                `X-Riot-ClientPlatform: ${clientPlatform}`,
-                "-H",
-                "Accept: application/json",
-                "-H",
-                "Content-Type: application/json",
-                "-d",
-                "{}",
-                `https://pd.${region}.a.pvp.net/store/v3/storefront/${subject}`
-            ], {
-                windowsHide: true,
-                timeout: 20000,
-                maxBuffer: 10 * 1024 * 1024
+            const parsed = await requestStorefront({
+                accessToken,
+                entitlementsToken,
+                subject,
+                region
             });
-
-            let parsed;
-            try {
-                parsed = JSON.parse(stdout);
-            } catch (_error) {
-                throw new Error(`Region ${region} returned invalid JSON: ${stdout.slice(0, 200)}`);
-            }
-
-            if (parsed.httpStatus && parsed.errorCode) {
-                throw new Error(`Region ${region} failed: ${parsed.errorCode} (${parsed.httpStatus}).`);
-            }
-
             return {
                 data: parsed,
                 region
@@ -999,45 +1039,12 @@ async function getStorefrontFromRemoteTokens(accessToken, entitlementsToken, sub
 
 async function getStorefrontFromLocalClient() {
     const session = await getLocalRiotSession();
-    const clientVersion = "release-09.00-shipping-28-2628993";
-    const clientPlatform = "eyJwbGF0Zm9ybVR5cGUiOiJQQyIsInBsYXRmb3JtT1MiOiJXaW5kb3dzIiwicGxhdGZvcm1PU1ZlcnNpb24iOiIxMC4wLjE5MDQzLjEuMjU2LjY0Yml0IiwicGxhdGZvcm1DaGlwc2V0IjoiVW5rbm93biJ9";
-
-    const { stdout } = await execFileAsync(CURL_BIN, [
-        "-s",
-        "-k",
-        "-X",
-        "POST",
-        "-H",
-        `Authorization: Bearer ${session.accessToken}`,
-        "-H",
-        `X-Riot-Entitlements-JWT: ${session.entitlementsToken}`,
-        "-H",
-        `X-Riot-ClientVersion: ${clientVersion}`,
-        "-H",
-        `X-Riot-ClientPlatform: ${clientPlatform}`,
-        "-H",
-        "Accept: application/json",
-        "-H",
-        "Content-Type: application/json",
-        "-d",
-        "{}",
-        `https://pd.${session.region}.a.pvp.net/store/v3/storefront/${session.subject}`
-    ], {
-        windowsHide: true,
-        timeout: 20000,
-        maxBuffer: 10 * 1024 * 1024
+    const parsed = await requestStorefront({
+        accessToken: session.accessToken,
+        entitlementsToken: session.entitlementsToken,
+        subject: session.subject,
+        region: session.region
     });
-
-    let parsed;
-    try {
-        parsed = JSON.parse(stdout);
-    } catch (_error) {
-        throw new Error(`Local storefront returned invalid JSON: ${stdout.slice(0, 200)}`);
-    }
-
-    if (parsed.httpStatus && parsed.errorCode) {
-        throw new Error(`Local storefront failed: ${parsed.errorCode} (${parsed.httpStatus}).`);
-    }
 
     return {
         data: parsed,
