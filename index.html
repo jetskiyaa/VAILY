@@ -779,8 +779,13 @@
         <section class="helper-grid">
             <section class="auth-helper">
                 <h2>Browser Login</h2>
-                <p>Finish Riot sign-in, then paste the final URL from the page that shows <span class="hint-danger">404</span>.</p>
-                <textarea id="redirect-input" placeholder="Paste the Riot redirect URL here"></textarea>
+                <p>
+                    1. Click <strong>Open Riot Login</strong> and sign in with your own Riot account.<br>
+                    2. After login, Riot will open a page that may show <span class="hint-danger">404</span>. That is normal.<br>
+                    3. Copy the full URL from the browser address bar on that page and paste it below.<br>
+                    4. Click <strong>Use Browser Login</strong> to load your store.
+                </p>
+                <textarea id="redirect-input" placeholder="Paste the full Riot redirect URL here, starting with https://playvalorant.com/..."></textarea>
                 <div class="actions browser-login-actions">
                     <button id="open-login-button" type="button">Open Riot Login</button>
                     <button id="test-redirect-button" class="secondary" type="button">Use Browser Login</button>
