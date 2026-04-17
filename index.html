@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Store Checker - Vaily</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        :root {
+            --val-red: #ff4655;
+            --val-black: #0f1923;
+            --card-bg: #1f2326;
+            --text-white: #ece8e1;
+            --card-blue: #10233d;
+            --card-gold: #3b2a0b;
+            --card-red: #30161b;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at left bottom, rgba(255, 255, 255, 0.04), transparent 24%),
+                linear-gradient(180deg, #19243b 0%, #131d31 100%);
+            color: var(--text-white);
+            font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        header {
+            margin: 0;
+            text-align: left;
+        }
+
+        h1 {
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--val-red);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        #status-bar {
+            background: #2b2f33;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            color: #8b9196;
+            display: inline-block;
+        }
+
+        .auth-helper {
+            width: 100%;
+            margin: 0 0 20px;
+            background: rgba(24, 34, 55, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            padding: 18px 20px;
+        }
+
+        .auth-helper h2 {
+            margin: 0 0 10px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .auth-helper p {
+            margin: 0 0 12px;
+            color: #aeb5bb;
+            font-size: 0.9rem;
+        }
+
+        .auth-helper textarea {
+            width: 100%;
+            min-height: 90px;
+            resize: vertical;
+            border: 1px solid #4b545c;
+            background: #131a21;
+            color: var(--text-white);
+            padding: 12px;
+            box-sizing: border-box;
+            font: inherit;
+        }
+
+        .auth-helper .actions,
+        .browser-login-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .auth-helper button {
+            background: var(--val-red);
+            color: white;
+            border: 0;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-helper button.secondary {
+            background: #3a4249;
+        }
+
+        .helper-grid {
+            width: 100%;
+            display: grid;
+            gap: 18px;
+            margin: 0 auto 20px;
+            max-width: 1340px;
+        }
+
+        .store-shell {
+            width: 100%;
+            max-width: 1340px;
+            margin: 0 auto;
+            padding-bottom: 50px;
+        }
+
+        .store-section {
+            margin-bottom: 48px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+        }
+
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .section-marker {
+            width: 4px;
+            height: 28px;
+            background: var(--val-red);
+        }
+
+        .section-head h2 {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            font-size: clamp(1.35rem, 2vw, 2rem);
+        }
+
+        .section-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            color: #8b9196;
+            font-size: 0.9rem;
+        }
+
+        .timer-label {
+            color: #93a1bb;
+            font-size: 0.76rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+
+        .timer-chip {
+            min-width: 34px;
+            padding: 8px 8px 7px;
+            text-align: center;
+            background: var(--val-red);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            align-items: start;
+        }
+
+        .store-card {
+            position: relative;
+            overflow: hidden;
+            min-height: 160px;
+            padding: 14px 14px 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            display: grid;
+            grid-template-rows: 1fr auto;
+            gap: 10px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0) 30%),
+                linear-gradient(180deg, #11233e, #0d1a2c);
+        }
+
+        .store-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.04), transparent 34%),
+                radial-gradient(circle at 72% 28%, rgba(255,255,255,0.05), transparent 28%);
+            pointer-events: none;
+        }
+
+        .store-card.skin-card {
+            background:
+                linear-gradient(180deg, rgba(68, 153, 255, 0.08), rgba(68, 153, 255, 0) 30%),
+                radial-gradient(circle at top right, rgba(105, 173, 255, 0.12), transparent 30%),
+                linear-gradient(180deg, #11243d, #0f1d31 75%);
+        }
+
+        .store-card.accessory-card {
+            background:
+                linear-gradient(180deg, rgba(255, 194, 92, 0.08), rgba(255, 194, 92, 0) 30%),
+                radial-gradient(circle at top right, rgba(255, 210, 125, 0.12), transparent 30%),
+                linear-gradient(180deg, #32230f, #241b10 75%);
+        }
+
+        .store-card.night-market-card {
+            background:
+                linear-gradient(180deg, rgba(255, 70, 85, 0.08), rgba(255, 70, 85, 0) 30%),
+                radial-gradient(circle at top right, rgba(255, 70, 85, 0.12), transparent 30%),
+                linear-gradient(180deg, #2c1720, #1d1218 75%);
+        }
+
+        .store-card:hover {
+            border-color: rgba(255, 255, 255, 0.26);
+            box-shadow: none;
+        }
+
+        .store-card img.skin-image {
+            width: 100%;
+            height: 112px;
+            object-fit: contain;
+            filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.3));
+            position: relative;
+            z-index: 1;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .skin-name {
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.25;
+            min-height: 2.5em;
+        }
+
+        .item-type {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .price-tag {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            align-self: center;
+            border-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vp-icon {
+            width: 20px !important;
+            height: 20px !important;
+            display: inline-block;
+            vertical-align: middle;
+            object-fit: contain;
+            /* Added brightness so it's easier to see */
+            filter: brightness(1.5) drop-shadow(0 0 2px white);
+        }
+
+        .vp-amount {
+            font-weight: bold;
+            color: var(--text-white);
+            font-size: 1rem;
+        }
+        .vp-text {
+    color: var(--val-red); /* Uses your Valorant Red variable */
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+        .rarity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.26);
+            padding: 3px 8px;
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .price-container {
+            display: grid;
+            gap: 8px;
+            margin-top: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+.compact-card {
+    background: rgba(31, 35, 38, 0.8);
+    border: 1px solid #363c42;
+    padding: 16px;
+}
+
+.compact-card img {
+    width: 100%;
+    height: 110px;
+    object-fit: contain;
+    margin-bottom: 12px;
+}
+
+        .price-stack {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+.price-old {
+    color: #8b9196;
+    text-decoration: line-through;
+    font-size: 0.9rem;
+}
+
+.discount-chip {
+    display: inline-block;
+    background: rgba(255,70,85,0.14);
+    color: var(--val-red);
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+        .empty-state {
+            border: 1px dashed #363c42;
+            color: #8b9196;
+            padding: 16px;
+        }
+
+.hint-danger {
+    color: var(--val-red);
+    font-weight: 700;
+}
+
+.clickable-card {
+    cursor: pointer;
+}
+
+.preview-modal[hidden] {
+    display: none;
+}
+
+.preview-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 10, 15, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+}
+
+.preview-dialog {
+    width: min(980px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: linear-gradient(180deg, #141d28, #0f151d);
+    border: 1px solid #394656;
+    border-radius: 12px;
+    padding: 22px;
+    box-sizing: border-box;
+}
+
+.preview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.preview-head h3 {
+    margin: 0 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.preview-sub {
+    color: #8b9196;
+    font-size: 0.9rem;
+}
+
+.preview-close {
+    background: transparent;
+    color: var(--text-white);
+    border: 1px solid #394656;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.preview-stage {
+    border: 1px solid #2f3946;
+    background:
+        radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 40%),
+        linear-gradient(180deg, #121925, #0c1118);
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+.preview-stage video,
+.preview-stage img {
+    width: 100%;
+    max-height: 58vh;
+    object-fit: contain;
+}
+
+.preview-empty {
+    color: #8b9196;
+    text-align: center;
+}
+
+.preview-controls {
+    display: grid;
+    gap: 18px;
+}
+
+.preview-control-group {
+    display: grid;
+    gap: 10px;
+}
+
+.preview-label {
+    color: #8b9196;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.variant-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.variant-button {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 120px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid #2f3946;
+    color: var(--text-white);
+    padding: 10px;
+    cursor: pointer;
+}
+
+.variant-button.active {
+    border-color: var(--val-red);
+    box-shadow: inset 0 0 0 1px rgba(255, 70, 85, 0.25);
+}
+
+.variant-button img {
+    width: 100%;
+    height: 72px;
+    object-fit: contain;
+}
+
+        .vp-amount {
+    font-weight: bold;
+    color: var(--text-white);
+    font-size: 1rem;
+}
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            background: rgba(16, 25, 43, 0.92);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .topbar-inner {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 28px;
+            min-height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .brand-logo {
+            width: 240px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .nav-link {
+            color: var(--val-red);
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 22px 0 18px;
+            border-bottom: 2px solid var(--val-red);
+        }
+
+        .topbar-status {
+            margin-left: auto;
+            max-width: 380px;
+            text-align: right;
+            color: #93a1bb;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .topbar-status#status-bar {
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            display: block;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 20px 28px 42px;
+        }
+
+        .hero-panel {
+            position: relative;
+            overflow: hidden;
+            min-height: 420px;
+            border: 1px solid rgba(238, 206, 155, 0.6);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0) 38%),
+                radial-gradient(circle at 50% 24%, rgba(255, 245, 203, 0.58), transparent 28%),
+                linear-gradient(135deg, #5e456b 0%, #2f2947 36%, #1a2135 78%, #182237 100%);
+            margin: 0 auto 28px;
+            max-width: 1340px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            align-items: stretch;
+        }
+
+        .hero-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 21% 72%, rgba(255, 150, 200, 0.38), transparent 14%),
+                radial-gradient(circle at 67% 32%, rgba(255, 238, 180, 0.32), transparent 16%),
+                linear-gradient(120deg, rgba(255,255,255,0.06), transparent 36%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            padding: 34px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 14px;
+        }
+
+        .hero-kicker {
+            color: #efc68e;
+            font-size: 0.8rem;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .hero-title {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 4rem);
+            line-height: 0.96;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            max-width: 8ch;
+        }
+
+        .hero-copy {
+            margin: 0;
+            max-width: 520px;
+            color: #eeded5;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .hero-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(9, 14, 24, 0.34);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+        }
+
+        .hero-gallery {
+            position: relative;
+            z-index: 1;
+            padding: 24px;
+            display: grid;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .hero-main-shot {
+            width: min(100%, 560px);
+            height: min(100%, 320px);
+            object-fit: contain;
+            filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.35));
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .hero-thumb {
+            position: absolute;
+            width: 170px;
+            height: 96px;
+            object-fit: contain;
+            filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.35));
+            opacity: 0.95;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .hero-thumb.one {
+            top: 58px;
+            right: 48px;
+            transform: rotate(9deg);
+        }
+
+        .hero-thumb.two {
+            bottom: 36px;
+            right: 110px;
+            transform: rotate(-12deg);
+        }
+
+        .footer {
+            max-width: 1340px;
+            margin: 0 auto;
+            padding: 18px 28px 28px;
+            color: #93a1bb;
+            font-size: 0.78rem;
+            display: grid;
+            gap: 10px;
+            justify-items: center;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-white);
+            text-decoration: underline;
+        }
+
+        .footer-disclaimer {
+            max-width: 920px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1100px) {
+            .hero-panel { grid-template-columns: 1fr; min-height: unset; }
+            .hero-gallery { min-height: 280px; }
+            .hero-thumb { width: 130px; height: 76px; }
+        }
+
+        @media (max-width: 720px) {
+            .topbar-inner, .page { padding-left: 16px; padding-right: 16px; }
+            .topbar-status { display: none; }
+            .brand-logo { width: 170px; }
+            .browser-login-actions { flex-direction: column; }
+            .auth-helper button { width: 100%; }
+            .store-grid { grid-template-columns: 1fr; }
+            .section-head { align-items: flex-start; }
+            .hero-content { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <svg class="brand-logo" width="240" height="64" viewBox="0 0 240 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Vaily Valorant Daily">
+                    <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="#111827" stroke="#243244"/>
+                    <path d="M16 18 L32 46 L48 18 L40 18 L32 34 L24 18 Z" fill="#FF5A6A"/>
+                    <text x="80" y="30" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="22" font-weight="700">VAILY</text>
+                    <text x="80" y="48" fill="#9FB0C8" font-family="Inter, sans-serif" font-size="10" font-weight="500">VALORANT DAILY</text>
+                </svg>
+                <a class="nav-link" href="/">Home</a>
+            </div>
+            <div class="topbar-status" id="status-bar">Status: Initializing...</div>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="helper-grid">
+            <section class="auth-helper">
+                <h2>Browser Login</h2>
+                <p>Finish Riot sign-in, then paste the final URL from the page that shows <span class="hint-danger">404</span>.</p>
+                <textarea id="redirect-input" placeholder="Paste the Riot redirect URL here"></textarea>
+                <div class="actions browser-login-actions">
+                    <button id="open-login-button" type="button">Open Riot Login</button>
+                    <button id="test-redirect-button" class="secondary" type="button">Use Browser Login</button>
+                </div>
+            </section>
+        </section>
+
+        <section class="hero-panel">
+            <div class="hero-content">
+                <div class="hero-kicker">Live Storefront</div>
+                <h1 class="hero-title" id="hero-title">Daily Store</h1>
+                <p class="hero-copy" id="hero-copy">Use Browser Login above to load your daily offers, weekly accessories, and Night Market in one view.</p>
+                <div class="hero-pill-row">
+                    <div class="hero-pill" id="hero-pill-primary">Waiting for store data</div>
+                    <div class="hero-pill" id="hero-pill-secondary">Preview videos supported</div>
+                </div>
+            </div>
+            <div class="hero-gallery">
+                <img class="hero-main-shot" id="hero-main-shot" alt="Store highlight" hidden>
+                <img class="hero-thumb one" id="hero-thumb-one" alt="Store highlight detail" hidden>
+                <img class="hero-thumb two" id="hero-thumb-two" alt="Store highlight detail" hidden>
+            </div>
+        </section>
+
+        <div class="store-shell" id="store-container"></div>
+    </main>
+
+    <div class="preview-modal" id="preview-modal" hidden>
+        <div class="preview-dialog">
+            <div class="preview-head">
+                <div>
+                    <h3 id="preview-title">Skin Preview</h3>
+                    <div class="preview-sub" id="preview-subtitle">Variant showcase</div>
+                </div>
+                <button class="preview-close" id="preview-close" type="button">Close</button>
+            </div>
+            <div class="preview-stage" id="preview-stage"></div>
+            <div class="preview-controls">
+                <div class="preview-control-group">
+                    <div class="preview-label">Levels</div>
+                    <div class="variant-list" id="level-list"></div>
+                </div>
+                <div class="preview-control-group">
+                    <div class="preview-label">Variants</div>
+                    <div class="variant-list" id="variant-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/privacy.html">Privacy Policy</a>
+            <span>|</span>
+            <a href="/terms.html">Terms of Use</a>
+            <span>|</span>
+            <a href="/copyright.html">Copyright Policy</a>
+        </div>
+        <div class="footer-disclaimer">
+            VAILY is an unofficial fan project and is not endorsed by Riot Games. VALORANT and Riot Games are trademarks or registered trademarks of Riot Games, Inc.
+        </div>
+    </footer>
+
+    <script>
+        const container = document.getElementById('store-container');
+        const status = document.getElementById('status-bar');
+        const redirectInput = document.getElementById('redirect-input');
+        const openLoginButton = document.getElementById('open-login-button');
+        const testRedirectButton = document.getElementById('test-redirect-button');
+        const heroTitle = document.getElementById('hero-title');
+        const heroCopy = document.getElementById('hero-copy');
+        const heroPillPrimary = document.getElementById('hero-pill-primary');
+        const heroPillSecondary = document.getElementById('hero-pill-secondary');
+        const heroMainShot = document.getElementById('hero-main-shot');
+        const heroThumbOne = document.getElementById('hero-thumb-one');
+        const heroThumbTwo = document.getElementById('hero-thumb-two');
+        const browserAuthUrl = 'https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid';
+        const previewModal = document.getElementById('preview-modal');
+        const previewTitle = document.getElementById('preview-title');
+        const previewSubtitle = document.getElementById('preview-subtitle');
+        const previewStage = document.getElementById('preview-stage');
+        const levelList = document.getElementById('level-list');
+        const variantList = document.getElementById('variant-list');
+        const previewClose = document.getElementById('preview-close');
+        let currentStore = null;
+        let timerIntervalId = null;
+        let timerBaselineMs = null;
+        let activePreview = null;
+        let activePreviewLevel = null;
+        let activePreviewVariant = null;
+
+        function renderPrice(price, originalPrice = null, discountPercent = null) {
+            if (!price) {
+                return '';
+            }
+
+            const original = originalPrice && originalPrice.amount && originalPrice.amount !== price.amount
+                ? `<span class="price-old">${originalPrice.label} ${Number(originalPrice.amount).toLocaleString()}</span>`
+                : '';
+            const discount = discountPercent
+                ? `<span class="discount-chip">${discountPercent}% OFF</span>`
+                : '';
+
+            return `
+                <div class="price-row">
+                    <div class="price-stack">
+                        ${original}
+                        ${discount}
+                    </div>
+                    <div class="price-tag">
+                        <span class="vp-text">${price.label}</span>
+                        <span class="vp-amount">${Number(price.amount || 0).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOfferCard(item, { variant = 'daily' } = {}) {
+            const variantClass = variant === 'accessory'
+                ? ' accessory-card'
+                : variant === 'night-market'
+                    ? ' night-market-card'
+                    : ' skin-card';
+            const cardClass = `store-card${variantClass}`;
+            const borderStyle = `style="border-bottom: 3px solid ${item.color || '#ff4655'}"`;
+            const previewAttr = item.preview ? `data-preview='${JSON.stringify(item.preview).replace(/'/g, '&apos;')}'` : '';
+            const clickableClass = item.preview ? ' clickable-card' : '';
+
+            return `
+                <article class="${cardClass}${clickableClass}" ${borderStyle} ${previewAttr} data-item-name="${item.name}">
+                    <div class="price-container">
+                        <div class="card-top">
+                            ${item.icon ? `<img src="${item.icon}" class="skin-image" alt="${item.name}">` : ''}
+                        </div>
+                        <div class="card-bottom">
+                            <div class="meta-row">
+                                <div class="item-type">${item.itemType || 'Item'}</div>
+                                <div class="rarity-badge" style="color: ${item.color || '#ff4655'};">
+                                    ${item.rarity || item.itemType || 'Offer'}
+                                </div>
+                            </div>
+                            <div class="skin-name">${item.name}</div>
+                            ${renderPrice(item.price, item.originalPrice, item.discountPercent)}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function createTimerMarkup(metaKey, seconds, prefix) {
+            const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+            const days = Math.floor(safeSeconds / 86400);
+            const hours = Math.floor((safeSeconds % 86400) / 3600);
+            const minutes = Math.floor((safeSeconds % 3600) / 60);
+            const remainingSeconds = safeSeconds % 60;
+            const values = days > 0
+                ? [
+                    { slot: 'D', value: days },
+                    { slot: 'H', value: hours },
+                    { slot: 'M', value: minutes },
+                    { slot: 'S', value: remainingSeconds }
+                ]
+                : [
+                    { slot: 'H', value: hours },
+                    { slot: 'M', value: minutes },
+                    { slot: 'S', value: remainingSeconds }
+                ];
+
+            return `
+                <div class="section-meta" data-meta-key="${metaKey}">
+                    <span class="timer-label">${prefix}</span>
+                    ${values.map((entry) => `<span class="timer-chip" data-slot="${entry.slot}">${String(entry.value).padStart(2, '0')}</span>`).join('')}
+                </div>
+            `;
+        }
+
+        function renderSection(title, metaKey, seconds, prefix, content) {
+            return `
+                <section class="store-section">
+                    <div class="section-head">
+                        <div class="section-title-wrap">
+                            <span class="section-marker"></span>
+                            <h2>${title}</h2>
+                        </div>
+                        ${seconds == null ? '' : createTimerMarkup(metaKey, seconds, prefix)}
+                    </div>
+                    ${content}
+                </section>
+            `;
+        }
+
+        function renderEmpty(text) {
+            return `<div class="empty-state">${text}</div>`;
+        }
+
+        function updateHero(store) {
+            const heroItems = [
+                ...(store.dailyOffers || []),
+                ...(store.nightMarket || []),
+                ...(store.accessoryOffers || [])
+            ].filter((item) => item && item.icon).slice(0, 3);
+            const lead = heroItems[0];
+
+            heroTitle.textContent = lead ? lead.name : 'Daily Store';
+            heroCopy.textContent = lead
+                ? `Your live storefront is loaded. Preview ${lead.name} and browse daily offers, weekly accessories, and Night Market items below.`
+                : 'Use Browser Login above to load your daily offers, weekly accessories, and Night Market in one view.';
+            heroPillPrimary.textContent = store.dailyOffers?.length
+                ? `${store.dailyOffers.length} daily offers loaded`
+                : 'Waiting for store data';
+            heroPillSecondary.textContent = store.nightMarket?.length
+                ? `${store.nightMarket.length} Night Market items`
+                : `${store.accessoryOffers?.length || 0} accessory offers`;
+
+            [[heroMainShot, heroItems[0]], [heroThumbOne, heroItems[1]], [heroThumbTwo, heroItems[2]]].forEach(([node, item]) => {
+                if (item?.icon) {
+                    node.src = item.icon;
+                    node.alt = item.name;
+                    node.hidden = false;
+                } else {
+                    node.hidden = true;
+                    node.removeAttribute('src');
+                }
+            });
+        }
+
+        function renderStore(store) {
+            currentStore = JSON.parse(JSON.stringify(store));
+            container.innerHTML = "";
+            updateHero(store);
+            const sections = [];
+
+            sections.push(renderSection(
+                'Daily Store',
+                'dailyOffers',
+                store.timers?.dailyOffersSeconds,
+                'Refreshes',
+                store.dailyOffers?.length
+                    ? `<div class="store-grid">${store.dailyOffers.map((item) => renderOfferCard(item, { variant: 'daily' })).join('')}</div>`
+                    : renderEmpty('No daily offers available.')
+            ));
+
+            sections.push(renderSection(
+                'Weekly Offers / Accessories',
+                'accessories',
+                store.timers?.accessoriesSeconds,
+                'Refreshes',
+                store.accessoryOffers?.length
+                    ? `<div class="store-grid">${store.accessoryOffers.map((item) => renderOfferCard(item, { variant: 'accessory' })).join('')}</div>`
+                    : renderEmpty('No accessory offers available.')
+            ));
+
+            sections.push(renderSection(
+                'Night Market',
+                'nightMarket',
+                store.timers?.nightMarketSeconds,
+                'Ends',
+                store.nightMarket?.length
+                    ? `<div class="store-grid">${store.nightMarket.map((item) => renderOfferCard(item, { variant: 'night-market' })).join('')}</div>`
+                    : renderEmpty('Night Market is not currently available.')
+            ));
+
+            container.innerHTML = sections.join('');
+            startRealTimeTimers();
+            bindPreviewCards();
+        }
+
+        function getPreviewLevels(preview) {
+            return Array.isArray(preview?.levels) && preview.levels.length ? preview.levels : [];
+        }
+
+        function getPreviewVariants(preview) {
+            return Array.isArray(preview?.variants) && preview.variants.length ? preview.variants : [];
+        }
+
+        function syncPreviewSubtitle() {
+            if (!activePreview) {
+                previewSubtitle.textContent = 'Streamed video and variant showcase';
+                return;
+            }
+
+            const parts = [];
+
+            if (activePreviewLevel?.name) {
+                const levelLabel = activePreviewLevel.shortLabel
+                    ? `${activePreviewLevel.name} (${activePreviewLevel.shortLabel})`
+                    : activePreviewLevel.name;
+                parts.push(levelLabel);
+            }
+
+            if (activePreviewVariant?.name && activePreviewVariant.name !== 'Default') {
+                parts.push(activePreviewVariant.name);
+            }
+
+            previewSubtitle.textContent = parts.length
+                ? parts.join(' • ')
+                : 'Streamed video and variant showcase';
+        }
+
+        function renderPreviewMedia() {
+            previewStage.innerHTML = '';
+            const variant = activePreviewVariant;
+            const level = activePreviewLevel;
+            const videoSource = variant?.video || level?.video || null;
+            const imageSource = variant?.icon || level?.icon || null;
+
+            if (videoSource) {
+                const video = document.createElement('video');
+                video.src = videoSource;
+                video.controls = true;
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true;
+                video.playsInline = true;
+                previewStage.appendChild(video);
+                return;
+            }
+
+            if (imageSource) {
+                const image = document.createElement('img');
+                image.src = imageSource;
+                image.alt = activePreviewLevel?.name || activePreviewVariant?.name || 'Skin preview';
+                previewStage.appendChild(image);
+                return;
+            }
+
+            previewStage.innerHTML = '<div class="preview-empty">No preview is available for this variant.</div>';
+        }
+
+        function renderLevelButtons(preview) {
+            levelList.innerHTML = '';
+            const levels = getPreviewLevels(preview);
+
+            if (!levels.length) {
+                levelList.innerHTML = '<div class="preview-empty">No level previews available.</div>';
+                return;
+            }
+
+            levels.forEach((level) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `variant-button${activePreviewLevel?.id === level.id ? ' active' : ''}`;
+                button.innerHTML = `
+                    ${level.icon ? `<img src="${level.icon}" alt="${level.name}">` : ''}
+                    <span>${level.shortLabel}</span>
+                `;
+                button.title = level.name;
+                button.addEventListener('click', () => {
+                    activePreviewLevel = level;
+                    renderPreviewMedia();
+                    syncPreviewSubtitle();
+                    levelList.querySelectorAll('.variant-button').forEach((node) => node.classList.remove('active'));
+                    button.classList.add('active');
+                });
+                levelList.appendChild(button);
+            });
+        }
+
+        function renderVariantButtons(preview) {
+            variantList.innerHTML = '';
+            const variants = getPreviewVariants(preview);
+
+            if (!variants.length) {
+                variantList.innerHTML = '<div class="preview-empty">No alternate variants available.</div>';
+                return;
+            }
+
+            variants.forEach((variant) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `variant-button${activePreviewVariant?.id === variant.id ? ' active' : ''}`;
+                button.innerHTML = `
+                    ${variant.icon ? `<img src="${variant.icon}" alt="${variant.name}">` : ''}
+                    <span>${variant.name}</span>
+                `;
+                button.addEventListener('click', () => {
+                    activePreviewVariant = variant;
+                    renderPreviewMedia();
+                    syncPreviewSubtitle();
+                    variantList.querySelectorAll('.variant-button').forEach((node) => node.classList.remove('active'));
+                    button.classList.add('active');
+                });
+                variantList.appendChild(button);
+            });
+        }
+
+        function openPreview(itemName, preview) {
+            if (!getPreviewLevels(preview).length && !getPreviewVariants(preview).length) {
+                return;
+            }
+
+            activePreview = preview;
+            previewTitle.textContent = itemName;
+            activePreviewLevel = getPreviewLevels(preview).find((level) => level.id === preview.defaultLevelId)
+                || getPreviewLevels(preview)[0]
+                || null;
+            activePreviewVariant = getPreviewVariants(preview).find((variant) => variant.id === preview.defaultVariantId)
+                || getPreviewVariants(preview)[0]
+                || null;
+            renderPreviewMedia();
+            syncPreviewSubtitle();
+            renderLevelButtons(preview);
+            renderVariantButtons(preview);
+            previewModal.hidden = false;
+        }
+
+        function closePreview() {
+            previewModal.hidden = true;
+            previewStage.innerHTML = '';
+            levelList.innerHTML = '';
+            variantList.innerHTML = '';
+            activePreview = null;
+            activePreviewLevel = null;
+            activePreviewVariant = null;
+        }
+
+        function bindPreviewCards() {
+            container.querySelectorAll('[data-preview]').forEach((card) => {
+                card.addEventListener('click', () => {
+                    const raw = card.getAttribute('data-preview');
+                    if (!raw) {
+                        return;
+                    }
+
+                    const preview = JSON.parse(raw.replace(/&apos;/g, "'"));
+                    openPreview(card.getAttribute('data-item-name') || 'Skin Preview', preview);
+                });
+            });
+        }
+
+        function updateSectionTimer(metaKey, seconds) {
+            const metaNode = document.querySelector(`[data-meta-key="${metaKey}"]`);
+            if (!metaNode || seconds == null) {
+                return;
+            }
+
+            const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+            const days = Math.floor(safeSeconds / 86400);
+            const hours = Math.floor((safeSeconds % 86400) / 3600);
+            const minutes = Math.floor((safeSeconds % 3600) / 60);
+            const remainingSeconds = safeSeconds % 60;
+            const slotValues = days > 0
+                ? { D: days, H: hours, M: minutes, S: remainingSeconds }
+                : { H: hours, M: minutes, S: remainingSeconds };
+
+            metaNode.querySelectorAll('.timer-chip').forEach((chip) => {
+                const slot = chip.getAttribute('data-slot');
+                const value = slotValues[slot];
+                if (value == null) {
+                    chip.remove();
+                } else {
+                    chip.textContent = String(value).padStart(2, '0');
+                }
+            });
+        }
+
+        function tickTimers() {
+            if (!currentStore?.timers) {
+                return;
+            }
+
+            const elapsedSeconds = timerBaselineMs == null
+                ? 0
+                : Math.max(0, Math.floor((Date.now() - timerBaselineMs) / 1000));
+
+            updateSectionTimer(
+                'dailyOffers',
+                Math.max(0, (currentStore.timers.dailyOffersBaseSeconds ?? 0) - elapsedSeconds)
+            );
+            updateSectionTimer(
+                'accessories',
+                Math.max(0, (currentStore.timers.accessoriesBaseSeconds ?? 0) - elapsedSeconds)
+            );
+            updateSectionTimer(
+                'nightMarket',
+                Math.max(0, (currentStore.timers.nightMarketBaseSeconds ?? 0) - elapsedSeconds)
+            );
+        }
+
+        function startRealTimeTimers() {
+            if (timerIntervalId) {
+                clearInterval(timerIntervalId);
+            }
+
+            if (currentStore?.timers) {
+                currentStore.timers.dailyOffersBaseSeconds = Number(currentStore.timers.dailyOffersSeconds ?? 0);
+                currentStore.timers.accessoriesBaseSeconds = Number(currentStore.timers.accessoriesSeconds ?? 0);
+                currentStore.timers.nightMarketBaseSeconds = Number(currentStore.timers.nightMarketSeconds ?? 0);
+            }
+
+            timerBaselineMs = Date.now();
+
+            tickTimers();
+            timerIntervalId = setInterval(tickTimers, 1000);
+        }
+
+        async function readJsonResponse(response) {
+            const text = await response.text();
+
+            if (!text) {
+                throw new Error(`Backend returned ${response.status} with an empty response`);
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (_error) {
+                throw new Error(text.slice(0, 200));
+            }
+        }
+
+         async function loadStore() {
+            try {
+                status.innerText = "Status: Connecting...";
+                const response = await fetch('/get-real-store');
+                const payload = await readJsonResponse(response);
+
+                if (!response.ok) {
+                    throw new Error(payload.error || `Backend returned ${response.status}`);
+                }
+
+                renderStore(payload);
+                status.innerText = "Status: Online";
+            } catch (error) {
+                status.innerText = `Status: ${error.message}`;
+                console.error(error);
+            }
+         }
+
+        async function testRedirectUrl() {
+            try {
+                status.innerText = "Status: Testing redirect URL...";
+
+                const response = await fetch('/test-redirect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        redirectUrl: redirectInput.value
+                    })
+                });
+
+                const payload = await readJsonResponse(response);
+
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.error || `Backend returned ${response.status}`);
+                }
+
+                renderStore(payload.offers);
+                redirectInput.value = "";
+                status.innerText = "Status: Redirect URL worked";
+            } catch (error) {
+                status.innerText = `Status: ${error.message}`;
+                console.error(error);
+            }
+        }
+
+        openLoginButton.addEventListener('click', () => {
+            window.open(browserAuthUrl, '_blank', 'noopener,noreferrer');
+        });
+        testRedirectButton.addEventListener('click', testRedirectUrl);
+        previewClose.addEventListener('click', closePreview);
+        previewModal.addEventListener('click', (event) => {
+            if (event.target === previewModal) {
+                closePreview();
+            }
+        });
+
+        document.addEventListener('dragstart', (event) => {
+            if (event.target.closest('img, svg')) {
+                event.preventDefault();
+            }
+        });
+
+        document.addEventListener('contextmenu', (event) => {
+            if (event.target.closest('.brand-logo, .hero-gallery img, .store-card img')) {
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "valstore",
+  "version": "1.0.0",
+  "description": "Unofficial VALORANT daily store viewer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@valapi/web-client": "^5.0.0-beta.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
